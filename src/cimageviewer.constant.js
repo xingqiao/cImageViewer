@@ -33,7 +33,7 @@
         /**
          * 是否循环查看，默认为 true
          */
-        loop: false,
+        loop: true,
 
         /**
          * 是否预加载图片，默认为 false

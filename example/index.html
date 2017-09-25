@@ -43,11 +43,6 @@ new CIV({
     <hr>
     <h3>示例</h3>
     <a class="btn js_dlg_1" href="javascript:;">展示</a>
-    <a class="btn js_dlg_2" href="javascript:;">本地文件</a>
-    <a class="btn js_dlg_3" href="javascript:;">无效链接</a>
-    <hr>
-    <h3>裁剪结果</h3>
-    <div class="js_result"></div>
 </div>
 
 <script src="../dest/cimageviewer.js"></script>
@@ -72,17 +67,9 @@ var params = {
     ],
     preload: true
 };
-"show hide slidestart slideend slidechange click download".split(" ").forEach(function (evt) {
+"show hide slidestart slideend slidechange click save".split(" ").forEach(function (evt) {
     params["on" + evt] = function () {
         console.log("EVENT:", evt, this);
-        // if (evt == "save") {
-        //     var result = document.querySelector(".js_result");
-        //     result.innerHTML = "";
-        //     var img = new Image();
-        //     img.src = arguments[0].data;
-        //     img.style.width = "100%";
-        //     result.appendChild(img);
-        // }
     }
 })
 var civ = new CIV(params);
@@ -90,12 +77,6 @@ var civ = new CIV(params);
 
 document.querySelector(".js_dlg_1").addEventListener("click", function () {
     civ.show();
-});
-document.querySelector(".js_dlg_2").addEventListener("click", function () {
-    civ.clear().show();
-});
-document.querySelector(".js_dlg_3").addEventListener("click", function () {
-    civ.load("./test10.jpg").show();
 });
 
 setTimeout(function() {
