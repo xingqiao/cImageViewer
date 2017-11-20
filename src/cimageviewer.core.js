@@ -12,7 +12,8 @@
 (function (win, doc) {
     var body = doc.body;
 
-    // requestAnimationFrame & cancelAnimationFrame
+    //#region requestAnimationFrame & cancelAnimationFrame
+
     (function () {
         var lastTime = 0;
         var vendors = ['webkit', 'moz'];
@@ -38,7 +39,10 @@
         }
     }());
 
-    // 工具方法库
+    //#endregion
+
+    //#region 工具方法库
+
     var utils = {
         touch: "ontouchend" in doc ? true : false,
         $: function (s, p, fun) {
@@ -63,6 +67,12 @@
                 .replace(/\r?\n/g, br || " ");
         },
         /**
+         * 设置transition
+         */
+        transition: function (elem, style) {
+            elem.style.transition = elem.style.webkitTransition = style;
+        },
+        /**
          * 设置transform-origin
          */
         transformOrigin: function (elem, x, y) {
@@ -76,8 +86,7 @@
         transform: function (elem, x, y, scale) {
             x = x == null ? 0 : x;
             y = y == null ? 0 : y;
-            scale = scale == null ? 1 : scale;
-            elem.style.transform = elem.style.webkitTransform = "translate3d(" + x + "px," + y + "px,0) scale(" + scale + ")";
+            elem.style.transform = elem.style.webkitTransform = "translate3d(" + x + "px," + y + "px,0)" + (scale > 0 ? " scale(" + scale + ")" : "");
         },
         /**
          * 兼容 touchstart 和 mousedown
@@ -145,9 +154,9 @@
                         y2 = e.touches[0].pageY;
                     }
                 });
-                elem.addEventListener("touchend", function () {
+                elem.addEventListener("touchend", function (e) {
                     if (Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) < 400) {
-                        callback.call(elem);
+                        callback.call(elem, e);
                     }
                     x1 = null;
                 });
@@ -173,13 +182,11 @@
                 i++;
             }
 
-            if (!utils.isObject(target) && !utils.isFunction(target)) {
-                target = {};
-            }
-
             if (i === length) {
-                target = this;
+                target = {};
                 i--;
+            } else if (!utils.isObject(target) && !utils.isFunction(target)) {
+                target = {};
             }
 
             for (; i < length; i++) {
@@ -190,15 +197,14 @@
                         if (target === copy) {
                             continue;
                         }
-                        if (deep && copy && (jQuery.isPlainObject(copy) ||
-                            (copyIsArray = Array.isArray(copy)))) {
+                        if (deep && copy && ((copyIsArray = Array.isArray(copy)) || utils.isObject(copy))) {
                             if (copyIsArray) {
                                 copyIsArray = false;
                                 clone = src && Array.isArray(src) ? src : [];
                             } else {
-                                clone = src && jQuery.isPlainObject(src) ? src : {};
+                                clone = src && utils.isObject(src) ? src : {};
                             }
-                            target[name] = jQuery.extend(deep, clone, copy);
+                            target[name] = utils.extend(deep, clone, copy);
                         } else if (copy !== undefined) {
                             target[name] = copy;
                         }
@@ -206,40 +212,13 @@
                 }
             }
 
-            // Return the modified object
             return target;
         },
         /**
-         * 计算过渡值
-         * @param {Number} t 当前时间
-         * @param {Number} b 初始值
-         * @param {Number} c 变化量
-         * @param {Number} d 持续时间
+         * 切换标签显示状态
          */
-        easeInOut: function (t, b, c, d) {
-            return -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b;
-        },
-        /**
-         * 动画过渡
-         */
-        transition: function (opts, iterator, callback) {
-            let { from, to, time } = opts;
-            let change = to - from;
-            let startTime = + new Date();
-            let run = () => {
-                let curTime = new Date() - startTime;
-                if (curTime < time) {
-                    let value = utils.easeInOut(Math.min(curTime, time), from, change, time);
-                    let active = iterator(value, curTime);
-                    if (active !== false) {
-                        requestAnimationFrame(run);
-                    }
-                } else {
-                    iterator(to, curTime);
-                    callback();
-                }
-            };
-            run();
+        toggle: function (elem, show) {
+            elem.style.display = show ? "" : "none";
         }
     };
     Array.prototype.forEach.call(["Object", "Function", "String", "Number", "Array", "Boolean", { type: "Img", key: "HTMLImageElement" }], function (item) {
@@ -248,13 +227,16 @@
         };
     });
 
+    //#endregion
+
     /**
      * 播放器核心类
      * @class CIV
      * @example new CIV({shape: CIV.SHAPE.SQUARE})
      */
     class CIV {
-        // ================================ 静态方法 ================================
+
+        //#region 静态方法
 
         /**
          * 构造函数
@@ -272,7 +254,9 @@
             this._initData(opts);
         }
 
-        // ================================ private ================================
+        //#endregion
+
+        //#region private
 
         /**
          * 事件在打开弹窗时触发
@@ -299,6 +283,12 @@
         __slideendHandler() { }
 
         /**
+         * 事件在页面切换时触发
+         * @private
+         */
+        __slidechangeHandler() { }
+
+        /**
          * 事件在点击图片时触发
          * @private
          */
@@ -310,10 +300,9 @@
          */
         __downloadHandler() { }
 
-        // =========================================================================
+        //#endregion
 
-
-        // ================================ protected ==============================
+        //#region protected
 
         /**
          * 派发事件
@@ -362,8 +351,15 @@
                     show: 0, // 展示弹窗
                     ani: 0 // 是否处于动画状态
                 },
-                iframe: null, // 浮层dom节点
-                btn: null, // 保存按钮dom节点
+                elem: { // 缓存dom节点
+                    iframe: null, // 浮层dom节点
+                    prev: null, // 向左箭头
+                    next: null, // 向右箭头
+                    num: null, // 图片序号
+                    curNum: null, // 当前图片序号
+                    allNum: null, // 总图片数
+                    desc: null // 图片描述
+                },
                 content: "", // 浮层html
                 items: {
                     prev: {},
@@ -372,15 +368,14 @@
                 },
                 view: { // 操作区
                     margin: 10, // 间隔大小
-                    padding: 100, // 位移超过该比例时进行切换
+                    padding: 50, // 位移超过该比例时进行切换
                     left: 0, // 当前可滑动左边界
                     right: 0, // 当前可滑动右边界
                     width: 0,
                     height: 0
                 },
                 transform: {
-                    resetDelay: 250, // 复位动画时间
-                    aniIndex: 0, // 动画序号
+                    duration: 250, // 复位动画时间
                     move: 0 // 切换位移
                 },
                 version: {
@@ -398,13 +393,19 @@
                         __.opts[key.toLowerCase()] = opts[key];
                     } else if (/^list$/i.test(key)) {
                         if (utils.isArray(opts[key])) {
+                            let src, desc;
                             opts[key].forEach((item, index) => {
                                 if (utils.isImg(item)) {
-                                    item = item.src;
+                                    src = item.src;
+                                    desc = item.getAttribute("data-civ-desc");
+                                } else {
+                                    src = item.src || item;
+                                    desc = item.desc;
                                 }
                                 __.opts.list.push({
                                     index: index,
-                                    src: item,
+                                    desc: desc ? utils.encodeHTML(desc) : "",
+                                    src: src,
                                     left: NaN,
                                     x: 0,
                                     y: 0,
@@ -412,7 +413,6 @@
                                 });
                             })
                         }
-
                     } else if (/^index$/i.test(key)) {
                         __.opts.index = parseInt(opts[key]);
                     } else {
@@ -444,7 +444,8 @@
         _initDlg() {
             let self = this;
             let __ = self.__;
-            let { opts, view, iframe, items, content, transform, state } = __;
+            let { opts, view, elem, items, content, transform, state } = __;
+            let { iframe } = elem;
 
             // 初始化iframe
             if (!iframe) {
@@ -456,16 +457,35 @@
                     body{background-color:#000;font:16px/1.5 sans-serif}
                     body{background-color:${opts.background}}
                     a,a:hover{text-decoration:none}
-                    .civ,.civ-cont,.civ-item{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}
+                    .civ,.civ-cont,.civ-item,.civ-item>div{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}
+                    .civ-ft{position:absolute;right:15px;bottom:20px;left:15px;z-index:10;display:-webkit-box;-webkit-box-align:center;overflow:hidden;font-size:14px;color:rgba(255,255,255,.6);}     
+                    .civ-page__cur{font-size:20px;font-weight:normal;color:#fff;}
+                    .civ-page__line{font-size:12px;font-style:normal;}
+                    .civ-tit{-webkit-box-flex:1;margin:2px 0 0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+                    .civ-arrow{position:absolute;top:50%;width:40px;height:40px;margin-top:-20px;color:#fff;}
+                    .civ-arrow::before,
+                    .civ-arrow::after{content:"";position:absolute;border-radius:3px;background:currentColor;}
+                    .civ-arrow::before{width:3px;height:32px;}
+                    .civ-arrow::after{width:32px;height:3px;}
+                    .civ-arrow--left{left:25px;-webkit-transform:rotate(-45deg);}
+                    .civ-arrow--right{right:25px;-webkit-transform:rotate(135deg);}
                     </style>
                     <div class="civ js_civ">
                         <div class="civ-cont js_civ_list">
-                            <div class="civ-item js_civ_item prev"><img></div>
-                            <div class="civ-item js_civ_item cur"><img></div>
-                            <div class="civ-item js_civ_item next"><img></div>
+                            <div class="civ-item js_civ_item prev"><div><img></div></div>
+                            <div class="civ-item js_civ_item cur"><div><img></div></div>
+                            <div class="civ-item js_civ_item next"><div><img></div></div>
                         </div>
+                        <div class="civ-ft">
+                            <div class="civ-page js_civ_num">
+                                <strong class="civ-page__cur js_civ_num_cur"></strong> <i class="civ-page__line">⁄</i> <span class="civ-page__all js_civ_num_all"></span>
+                            </div>
+                            <h6 class="civ-tit js_civ_desc"></h6>
+                        </div>
+                        <a href="javascript:;" class="civ-arrow civ-arrow--left js_civ_prev"></a>
+                        <a href="javascript:;" class="civ-arrow civ-arrow--right js_civ_next"></a>
                     </div>`;
-                __.iframe = iframe;
+                elem.iframe = iframe;
                 __.content = content;
             }
             doc.body.appendChild(iframe);
@@ -473,34 +493,77 @@
             iDoc.write(content);
             iDoc.close();
 
+            // 展示序号及简介
+            elem.num = utils.$(".js_civ_num", iDoc);
+            elem.curNum = utils.$(".js_civ_num_cur", iDoc);
+            elem.allNum = utils.$(".js_civ_num_all", iDoc);
+            elem.desc = utils.$(".js_civ_desc", iDoc);
+            elem.allNum.innerHTML = opts.list.length;
+            utils.toggle(elem.num, !!opts.orderNumber);
+
+            // 切换按钮
+            elem.prev = utils.$(".js_civ_prev", iDoc);
+            elem.next = utils.$(".js_civ_next", iDoc);
+
             // 获取弹窗大小
             let width = parseInt(win.innerWidth);
             let height = parseInt(win.innerHeight);
             view.width = width;
             view.height = height;
-            view.padding = parseInt(width / 3);
+            // view.padding = parseInt(width / 5);
 
             // 获取items
             for (let key in items) {
                 let item = items[key] = {};
-                item.inZoom = 0;
-                item.div = utils.$(".js_civ_item." + key, iDoc);
-                item.img = utils.$("img", item.div);
+                item.wrap = utils.$(".js_civ_item." + key, iDoc);
+                item.div = utils.$("div", item.wrap);
+                item.img = utils.$("img", item.wrap);
             }
 
+            // 设置缩放
+            let _setZoom = function (x, y, scale) {
+                let item = items.cur;
+                let zoom = item.zoom;
+
+                // 缩放后的大小
+                let _width = width * scale;
+                let _height = height * scale;
+                let mx = (_width - width) / scale;
+                let my = (_height - height) / scale;
+
+                // 尝试移动覆盖整个窗口
+                x = Math.min(Math.max(x, 0), mx);
+                y = Math.min(Math.max(y, 0), my);
+
+                // 判断是否可以覆盖
+                if (
+                    scale <= 4 &&
+                    (x >= 0) &&
+                    (x <= mx) &&
+                    (y >= 0) &&
+                    (y <= my)
+                ) {
+                    zoom.width = _width;
+                    zoom.height = _height;
+                    zoom.x = x;
+                    zoom.y = y;
+                    zoom.scale = scale;
+                    utils.transformOrigin(item.div, x, y);
+                    utils.transform(item.div, -x, -y, scale);
+                }
+            };
+
             let oList = utils.$(".js_civ_list", iDoc);
-            let pos = [];
-            let isTouch = 0;
+            let touches = [];
+            let needReset = 0;
             utils
                 // 平移及缩放
                 .ondown(oList, function (e) {
                     if (state.show) {
-                        isTouch = 1;
-                        pos.length = 0;
-                        transform.aniIndex++;
+                        touches.length = 0;
                         if (e.touches.length) {
                             Array.prototype.forEach.call(e.touches, point => {
-                                pos.push({
+                                touches.push({
                                     x: point.pageX,
                                     y: point.pageY
                                 });
@@ -512,33 +575,94 @@
                     e.stopPropagation();
                 })
                 .onmove(oList, function (e) {
-                    let point = pos[0];
                     let touche = e.touches[0];
-                    if (isTouch && point && touche) {
-                        let x = touche.pageX;
-                        let y = touche.pageY;
-                        let dx = x - point.x;
-                        if (dx) {
-                            let move = parseInt(transform.move + dx);
-                            if (-move >= view.left && -move <= view.right) {
-                                transform.move = move;
-                                self._update();
+                    if (touche) {
+                        let x, y;
+                        let zoom = items.cur.zoom;
+                        let scale = zoom.scale;
+                        let x1 = touche.pageX;
+                        let y1 = touche.pageY;
+
+                        if (touches.length == 2 && e.touches.length == 2) { // 缩放
+                            let x2 = e.touches[1].pageX;
+                            let y2 = e.touches[1].pageY;
+
+                            let cx = (touches[0].x + touches[1].x) / 2;
+                            let cy = (touches[0].y + touches[1].y) / 2;
+
+                            // 双指距离改变量
+                            let l1 = Math.sqrt(Math.pow(touches[1].x - touches[0].x, 2) + Math.pow(touches[1].y - touches[0].y, 2));
+                            let l2 = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                            let sl = l2 / l1;
+
+                            // 将绕 cx,cy 缩放转换成绕可视区域左上角缩放
+                            scale *= sl;
+                            let ds = (sl - 1) / scale;
+                            x = zoom.x + cx * ds;
+                            y = zoom.y + cy * ds;
+
+                            _setZoom(x, y, scale);
+
+                            touches[0].x = x1;
+                            touches[0].y = y1;
+                            touches[1].x = x2;
+                            touches[1].y = y2;
+                        } else if (touches.length && opts.list.length > 1) { // 平移
+                            let dx = x1 - touches[0].x;
+                            let dy = y1 - touches[0].y;
+                            x = zoom.x - dx / scale;
+                            // 判断是切换还是图片查看
+                            if (x > 0 && x < (zoom.width - width) / scale) {
+                                y = zoom.y - dy / scale;
+                                _setZoom(x, y, scale);
+                            } else{
+                                if (dx) {
+                                    let move = parseInt(transform.move + dx);
+                                    if (-move >= view.left && -move <= view.right) {
+                                        transform.move = move;
+                                        self._update();
+                                        needReset = 1;
+                                    }
+                                }
                             }
+                            touches[0].x = x1;
+                            touches[0].y = y1;
                         }
-                        point.x = x;
-                        point.y = y;
                     }
                     e.preventDefault();
                     e.stopPropagation();
                 })
                 .onup(oList, function () {
-                    isTouch = 0;
-                    pos.length = 0;
-                    self._reset();
+                    touches.length = 0;
+                    if (needReset) {
+                        self._reset();
+                    }
                 })
                 .ontap(oList, function () {
                     self._trigger("click");
+                })
+                // 左右切换
+                .ontap(elem.prev, function () {
+                    self.prev();
+                })
+                .ontap(elem.next, function () {
+                    self.next();
                 });
+            // 滚轮缩放
+            oList.addEventListener("mousewheel", function (e) {
+                if (state.show) {
+                    let zoom = items.cur.zoom;
+                    let scale = zoom.scale * (e.deltaY > 0 ? 0.9 : 1 / 0.9);
+                    let cx = e.clientX;
+                    let cy = e.clientY;
+                    let ds = scale - zoom.scale;
+                    let x = zoom.x + cx * ds / scale;
+                    let y = zoom.y + cy * ds / scale;
+                    _setZoom(x, y, scale);
+                }
+                e.preventDefault();
+                e.stopPropagation();
+            });
 
             self._initItems();
             return self;
@@ -587,23 +711,24 @@
         _initItems() {
             let self = this;
             let __ = self.__;
-            let { opts, view, items, transform } = __;
+            let { opts, elem, view, items, transform } = __;
 
             // 设置图片
             let length = opts.list.length;
             let index = opts.index > 0 && opts.index < length ? parseInt(opts.index) : 0;
             let setItem = function (key, no) {
                 let item = items[key];
-                let img = opts.list[no] || {};
-                if (item.index !== img.index) {
-                    item.index = img.index;
+                let data = opts.list[no] || {};
+                item.data = data;
+                if (item.index !== data.index) {
+                    item.index = data.index;
                     // 加载图片
-                    if (img.src) {
-                        item.img.src = img.src;
+                    if (data.src) {
+                        item.img.src = data.src;
                     } else {
                         item.img.removeAttribute("src");
                     }
-                    self._preloadImage(img, (img) => {
+                    self._preloadImage(data, (img) => {
                         // 重置缩放
                         let scale = 1;
                         let x = 0;
@@ -622,14 +747,28 @@
                         item.x = x = parseInt(x);
                         item.y = y = parseInt(y);
                         item.scale = scale;
+                        item.zoom = {
+                            width: 0,
+                            height: 0,
+                            x: 0,
+                            y: 0,
+                            scale: 1
+                        };
                         utils.transformOrigin(item.img, x, y);
                         utils.transform(item.img, -x, -y, scale);
+                        utils.transformOrigin(item.div, 0, 0);
+                        utils.transform(item.div, 0, 0, 1);
                     });
                 }
             };
             setItem("prev", (index - 1 + length) % length);
             setItem("cur", index);
             setItem("next", (index + 1) % length);
+
+            // 序号、简介及切换箭头
+            elem.curNum.innerHTML = index + 1;
+            elem.desc.innerHTML = items.cur.data.desc || "";
+            self._setArrow();
 
             // 复位
             transform.move = 0;
@@ -644,24 +783,69 @@
          * @param {Boolean} ani 是否采用动画过渡
          * @protected
          */
-        _update(ani) {
+        _update(ani, callback) {
             let self = this;
             let __ = self.__;
             let { view, items, transform } = __;
             let size = view.width + view.margin;
             let x = transform.move;
-            let move = (item, x) => {
+
+            if (!utils.isFunction(callback)) {
+                callback = null;
+            }
+
+            let deal = (values, act) => {
+                if (!utils.isArray(values)) {
+                    values = [];
+                }
+                act(items.prev, values[0]);
+                act(items.cur, values[1]);
+                act(items.next, values[2]);
+            };
+
+            // 判断是否需要移动
+            deal([x - size, x, x + size], (item, value) => {
+                item._needMove = 0;
                 let left = item.left;
-                if (left != x) {
-                    item.left = x;
-                    if ((left >= -size && left <= size) || (x >= -size && x <= size)) {
-                        utils.transform(item.div, x);
+                if (left != value) {
+                    item.left = value;
+                    if ((left >= -size && left <= size) || (value >= -size && value <= size)) {
+                        item._needMove = 1;
                     }
                 }
+            });
+
+            // 设置动画
+            let setAni = (enable) => {
+                let style = enable ? "all " + transform.duration + "ms ease" : "";
+                deal(null, (item, value) => {
+                    if (item._needMove) {
+                        utils.transition(item.wrap, style);
+                    }
+                });
             };
-            move(items.prev, x - size);
-            move(items.cur, x);
-            move(items.next, x + size);
+
+            // 移动
+            let move = () => {
+                deal(null, (item, value) => {
+                    if (item._needMove) {
+                        utils.transform(item.wrap, item.left);
+                    }
+                });
+            };
+
+            if (ani) {
+                setAni(true);
+                setTimeout(move, 0);
+                setTimeout(() => {
+                    setAni(false);
+                    callback && callback();
+                }, transform.duration);
+            } else {
+                move();
+                callback && callback();
+            }
+
             return self;
         }
 
@@ -687,74 +871,82 @@
         _reset(move) {
             let self = this;
             let __ = self.__;
-            let { opts, view, items, transform } = __;
+            let { opts, state, view, items, transform } = __;
             let act = null;
 
-            transform.aniIndex++;
-            let aniIndex = transform.aniIndex;
+            if (!state.ani) {
+                state.ani = 1;
 
-            if (move != null && (-move >= view.left || -move <= view.right)) {
-                self._trigger("slidestart");
-            } else {
-                move = transform.move;
-            }
-            if (Math.abs(move) > view.padding) {
-                let size = view.width + view.margin;
-                if (move > 0) { // 上一页
-                    move = size;
-                    act = -1;
-                } else { // 下一页
-                    move = -size;
-                    act = 1;
+                if (move != null && (-move >= view.left || -move <= view.right)) {
+                    self._trigger("slidestart");
+                } else {
+                    move = transform.move;
                 }
-            } else { // 复位
-                move = 0;
-            }
-
-            utils.transition({
-                from: transform.move,
-                to: move,
-                time: transform.resetDelay
-            }, (value, time) => {
-                let active = aniIndex == transform.aniIndex; // 判断动画是否过时
-                if (active) {
-                    transform.move = value;
-                    self._update();
-                }
-                return active;
-            }, () => {
-                // 交换位置
-                if (act) {
+                if (Math.abs(move) > view.padding) {
                     let size = view.width + view.margin;
-                    let swap = (prev, cur, next) => {
-                        items.prev = prev;
-                        items.cur = cur;
-                        items.next = next;
-                        opts.index = cur.index;
-                    };
-                    if (act == 1) {
-                        swap(items.cur, items.next, items.prev);
-                    } else if (act == -1) {
-                        swap(items.next, items.prev, items.cur);
+                    if (move > 0) { // 上一页
+                        move = size;
+                        act = -1;
+                    } else { // 下一页
+                        move = -size;
+                        act = 1;
                     }
-                    transform.move = 0;
-                    self._initItems();
+                } else { // 复位
+                    move = 0;
                 }
-                self._trigger("slideend");
-                if (act) {
-                    self._trigger("slidechange");
-                }
-            });
+
+                // 移动
+                transform.move = move;
+                self._update(true, () => {
+                    // 交换位置
+                    if (act) {
+                        let size = view.width + view.margin;
+                        let swap = (prev, cur, next) => {
+                            items.prev = prev;
+                            items.cur = cur;
+                            items.next = next;
+                            opts.index = cur.index;
+                        };
+                        if (act == 1) {
+                            swap(items.cur, items.next, items.prev);
+                        } else if (act == -1) {
+                            swap(items.next, items.prev, items.cur);
+                        }
+                        transform.move = 0;
+                        self._initItems();
+                    }
+                    setTimeout(() => {
+                        state.ani = 0;
+                    }, 10);
+                    self._trigger("slideend");
+                    if (act) {
+                        self._trigger("slidechange");
+                    }
+                });
+            }
 
             return self;
         }
 
-        // =========================================================================
+        /**
+         * 更新切换箭头展示状态
+         */
+        _setArrow() {
+            let self = this;
+            let __ = self.__;
+            let { opts, elem } = __;
+            let { prev, next } = elem;
 
+            let length = opts.list.length;
+            utils.toggle(elem.prev, length > 1 && (opts.loop || opts.index > 0));
+            utils.toggle(elem.next, length > 1 && (opts.loop || opts.index < length - 1));
 
-        // ================================ public =================================
+            return self;
+        }
 
-        // 播放器方法
+        //#endregion
+
+        //#region public
 
         /**
          * 打开裁剪弹窗
@@ -763,7 +955,7 @@
         show() {
             let self = this;
             let __ = self.__;
-            let { state, iframe } = __;
+            let { state } = __;
 
             if (!state.show) {
                 // 初始化弹窗
@@ -785,7 +977,9 @@
         hide(type) {
             let self = this;
             let __ = self.__;
-            let { state, iframe } = __;
+            let { state, elem } = __;
+            let { iframe } = elem;
+
             if (state.show) {
                 doc.body.removeChild(iframe);
 
@@ -804,7 +998,9 @@
             let self = this;
             let __ = self.__;
             let { opts, state, view } = __;
-            if (state.show) {
+
+            let length = opts.list.length;
+            if (state.show && length > 1 && (opts.loop || opts.index > 0)) {
                 self._reset(view.width);
             }
             return self;
@@ -818,7 +1014,9 @@
             let self = this;
             let __ = self.__;
             let { opts, state, view } = __;
-            if (state.show) {
+
+            let length = opts.list.length;
+            if (state.show && length > 1 && (opts.loop || opts.index < length - 1)) {
                 self._reset(-view.width);
             }
             return self;
@@ -890,7 +1088,7 @@
             return this.__.version;
         }
 
-        // =========================================================================
+        //#endregion
     }
 
     CIV.utils = utils;

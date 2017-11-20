@@ -53,12 +53,19 @@ window.onerror = function (e) {
 var params = {
     animation: CIV.ANIMATION.TRANSLATE,
     background: "#444",
-    loop: false,
+    loop: true,
     save: true,
+    orderNumber: true,
     list: [
-        "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432027474009126350.jpg",
-        "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432027858747126350.jpg",
-        "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432035906703126350.jpg",
+        {
+            src: "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432027858747126350.jpg",
+            desc: "图片描述1图片描述1图片描述1图片描述1图片描述1图片描述1图片描述1图片描述1"
+        },
+        {
+            src: "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432027474009126350.jpg",
+            desc: "图片描述"
+        },
+        "//p.qpic.cn/music_cover/QS96U4vDnzy1yqy00NXLIwaY9PTQt7TgA6yGAHP3K2OAEfW0J0A52w/300",
         "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432035984898126350.jpg",
         "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432036035333126350.jpg",
         "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432038769616126350.jpg",

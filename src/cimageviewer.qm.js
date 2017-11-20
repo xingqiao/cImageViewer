@@ -19,13 +19,17 @@
         constructor(opts) {
             super(opts);
 
-            this.__.version.build = "CIV_QM";
+            let __ = this.__;
+
+            __.elem.save = null; // 保存按钮dom节点
+            __.version.build = "CIV_QM";
         }
 
         _showHandler() {
             let self = this;
             let __ = self.__;
-            let { opts, iframe } = __;
+            let { opts, elem } = __;
+            let { iframe } = elem;
 
             let iDoc = iframe.contentDocument;
             let div = iDoc.createElement("div");
@@ -35,10 +39,10 @@
                 <button class="civ-btn js_save" style="${opts.save ? "" : "display:none"}">${opts.saveBtn}</button>`;
             iDoc.body.appendChild(div);
 
-            __.btn = utils.$(".js_save", iDoc);
+            elem.save = utils.$(".js_save", iDoc);
 
             // 保存图片
-            utils.ontap(__.btn, function () {
+            utils.ontap(elem.save, function () {
                 self._save();
             });
         }
@@ -99,9 +103,9 @@
         set save(value) {
             let self = this;
             let __ = self.__;
-            let { opts } = __;
+            let { opts, elem } = __;
             opts.save = !!value;
-            __.btn.style.display = opts.save ? "block" : "none";
+            elem.btn.style.display = opts.save ? "block" : "none";
         }
 
         /**
@@ -113,11 +117,11 @@
         set saveBtn(value) {
             let self = this;
             let __ = self.__;
-            let { opts } = __;
+            let { opts, elem } = __;
             value = "" + value;
             if (value != opts.saveBtn) {
                 opts.saveBtn = value;
-                __.btn.innerText = value;
+                elem.btn.innerText = value;
             }
         }
 
