@@ -249,6 +249,7 @@
          * @param {String} opts.background 弹窗背景色，默认为黑色 "#000"
          * @param {String} opts.animation 切换动画，默认是平移 "translate"，值在 CIV.ANIMATION 中定义
          * @param {String} opts.zIndex 浮层层级，默认是 99999
+         * @param {Boolean} opts.close 是否展示关闭按钮，默认为 true
          */
         constructor(opts) {
             this._initData(opts);
@@ -458,17 +459,20 @@
                     body{background-color:${opts.background}}
                     a,a:hover{text-decoration:none}
                     .civ,.civ-cont,.civ-item,.civ-item>div{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}
-                    .civ-ft{position:absolute;right:15px;bottom:20px;left:15px;z-index:10;display:-webkit-box;-webkit-box-align:center;overflow:hidden;font-size:14px;color:rgba(255,255,255,.6);}     
+                    .civ-ft{position:absolute;right:15px;bottom:20px;left:15px;z-index:10;display:-webkit-box;-webkit-box-align:center;overflow:hidden;font-size:14px;color:rgba(255,255,255,.6);}
                     .civ-page__cur{font-size:20px;font-weight:normal;color:#fff;}
                     .civ-page__line{font-size:12px;font-style:normal;}
                     .civ-tit{-webkit-box-flex:1;margin:2px 0 0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-                    .civ-arrow{position:absolute;top:50%;width:40px;height:40px;margin-top:-20px;color:#fff;}
-                    .civ-arrow::before,
-                    .civ-arrow::after{content:"";position:absolute;border-radius:3px;background:currentColor;}
+                    .civ-arrow,.civ-close{position:absolute;top:50%;width:40px;height:40px;margin-top:-20px;color:#fff;}
+                    .civ-arrow::before,.civ-arrow::after{content:"";position:absolute;border-radius:3px;background:currentColor;}
                     .civ-arrow::before{width:3px;height:32px;}
                     .civ-arrow::after{width:32px;height:3px;}
                     .civ-arrow--left{left:25px;-webkit-transform:rotate(-45deg);}
                     .civ-arrow--right{right:25px;-webkit-transform:rotate(135deg);}
+                    .civ-close{top:40px;right:20px;-webkit-transform:rotate(135deg);}
+                    .civ-close::before,.civ-close::after{content:"";position:absolute;border-radius:3px;background:currentColor;}
+                    .civ-close::before{width:3px;height:32px;margin-left:14px;}
+                    .civ-close::after{width:32px;height:3px;margin-top:14px;}
                     </style>
                     <div class="civ js_civ">
                         <div class="civ-cont js_civ_list">
@@ -484,6 +488,7 @@
                         </div>
                         <a href="javascript:;" class="civ-arrow civ-arrow--left js_civ_prev"></a>
                         <a href="javascript:;" class="civ-arrow civ-arrow--right js_civ_next"></a>
+                        <a href="javascript:;" class="civ-close js_civ_close"></a>
                     </div>`;
                 elem.iframe = iframe;
                 __.content = content;
@@ -504,6 +509,9 @@
             // 切换按钮
             elem.prev = utils.$(".js_civ_prev", iDoc);
             elem.next = utils.$(".js_civ_next", iDoc);
+
+            // 关闭按钮
+            elem.close = utils.$(".js_civ_close", iDoc);
 
             // 获取弹窗大小
             let width = parseInt(win.innerWidth);
@@ -647,6 +655,10 @@
                 })
                 .ontap(elem.next, function () {
                     self.next();
+                })
+                // 关闭
+                .ontap(elem.close, function () {
+                    self.hide();
                 });
             // 滚轮缩放
             oList.addEventListener("mousewheel", function (e) {
@@ -769,6 +781,7 @@
             elem.curNum.innerHTML = index + 1;
             elem.desc.innerHTML = items.cur.data.desc || "";
             self._setArrow();
+            self.close = opts.close;
 
             // 复位
             transform.move = 0;
@@ -938,8 +951,8 @@
             let { prev, next } = elem;
 
             let length = opts.list.length;
-            utils.toggle(elem.prev, length > 1 && (opts.loop || opts.index > 0));
-            utils.toggle(elem.next, length > 1 && (opts.loop || opts.index < length - 1));
+            utils.toggle(elem.prev, opts.arrow && length > 1 && (opts.loop || opts.index > 0));
+            utils.toggle(elem.next, opts.arrow && length > 1 && (opts.loop || opts.index < length - 1));
 
             return self;
         }
@@ -1035,16 +1048,33 @@
         set list(value) {
             let self = this;
             let __ = self.__;
-            let { opts } = __;
+            let { opts, state } = __;
             if (utils.isArray(value)) {
                 let curList = self.list;
                 if (curList.join(",") != value.join(",")) {
                     opts.list = value;
                     opts.index = 0;
-                    self._initData(opts)
-                        ._reset();
+                    if (state.show) {
+                        self._initData(opts)
+                            ._reset();
+                    }
                 }
             }
+        }
+
+        /**
+         * 获取或设置关闭按钮
+         */
+        get close() {
+            return !!this.__.opts.close;
+        }
+        set close(value) {
+            let self = this;
+            let __ = self.__;
+            let { opts, elem } = __;
+
+            opts.close = !!value;
+            utils.toggle(elem.close, opts.close);
         }
 
         /**
@@ -1056,11 +1086,13 @@
         set index(value) {
             let self = this;
             let __ = self.__;
-            let { opts } = __;
+            let { opts, state } = __;
             value = parseInt(value);
             if (value >= 0 && value <= opts.list.length - 1) {
                 opts.index = value;
-                self._initItems();
+                if (state.show) {
+                    self._initItems();
+                }
             }
         }
 
@@ -1073,11 +1105,13 @@
         set loop(value) {
             let self = this;
             let __ = self.__;
-            let { opts } = __;
+            let { opts, state } = __;
             value == !!value;
             if (value != opts.loop) {
                 opts.loop = value;
-                self._updateViewScroll();
+                if (state.show) {
+                    self._updateViewScroll();
+                }
             }
         }
 

@@ -41,6 +41,11 @@
         orderNumber: true,
 
         /**
+         * 是否展示关闭按钮，默认为 true
+         */
+        close: true,
+
+        /**
          * 是否展示左右切换箭头，默认为 true
          */
         arrow: true,

@@ -10,7 +10,7 @@
 
 ## 支持功能
 
-- 支持浏览图片
+- 支持缩放查看图片
 
 - 支持保存图片到本地
 
@@ -54,6 +54,7 @@ new CIV({
 | index | Number | 0 | 查看的图片序号 |
 | loop | Boolean | true | 是否循环查看 |
 | orderNumber | Boolean | true | 是否展示图片序号 |
+| close | Boolean | true | 是否展示关闭按钮 |
 | arrow | Boolean | true | 是否展示左右切换箭头 |
 | save | Boolean | false | 是否展示保存按钮 |
 | saveBtn | String | "保存图片" | 保存按钮文本 |
@@ -70,6 +71,7 @@ new CIV({
 | index | Number | \- | 获取或设置当前查看的图片 |
 | loop | Boolean | \- | 获取或设置循环查看 |
 | version | String | \- | 获取组件版本号 |
+| close | Boolean | \- | 获取或设置关闭按钮设置 |
 | save | Boolean | \- | 获取或设置保存按钮设置 |
 | saveBtn | String | \- | 获取或设置保存按钮文本 |
 
