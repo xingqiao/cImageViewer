@@ -58,6 +58,7 @@ new CIV({
 | arrow | Boolean | true | 是否展示左右切换箭头 |
 | save | Boolean | false | 是否展示保存按钮 |
 | saveBtn | String | "保存图片" | 保存按钮文本 |
+| noSave | Boolean | false | 禁用默认保存逻辑 |
 | preload | Boolean | false | 是否预加载图片 |
 | dots | Boolean | true | 是否展示 |
 | background | String | "#000" | 弹窗背景色，默认为黑色 |

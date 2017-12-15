@@ -15,6 +15,7 @@
          * @constructor
          * @param {Boolean} opts.save 是否展示保存按钮，默认为 false
          * @param {String} opts.saveBtn 保存按钮文本，默认为 "保存图片"
+         * @param {Function} opts.onsave 保存按钮文本，默认为 "保存图片"
          */
         constructor(opts) {
             super(opts);
@@ -68,25 +69,27 @@
                         self._trigger("save", data);
                     };
 
-                    // 调用QQ音乐客户端保存图片
-                    if (win.M && M.client) {
-                        if (utils.isFunction(M.client.open)) {
-                            M.client.open("media", "saveImage", { content: src }, next);
-                            return self;
-                        } else if (utils.isFunction(M.client.invoke)) {
-                            M.client.invoke("media", "saveImage", { content: src }, next);
-                            return self;
+                    if (!opts.noSave) {
+                        // 调用QQ音乐客户端保存图片
+                        if (win.M && M.client) {
+                            if (utils.isFunction(M.client.open)) {
+                                M.client.open("media", "saveImage", { content: src }, next);
+                                return self;
+                            } else if (utils.isFunction(M.client.invoke)) {
+                                M.client.invoke("media", "saveImage", { content: src }, next);
+                                return self;
+                            }
                         }
-                    }
 
-                    // 利用a标签保存
-                    let a = doc.createElement("a");
-                    a.href = src;
-                    a.target = "_blank";
-                    let filename = src.split(/[#?]/);
-                    filename = filename[0].match(/[\w.]+$/);
-                    a.download = filename && filename[0] || "save.jpg";
-                    a.click();
+                        // 利用a标签保存
+                        let a = doc.createElement("a");
+                        a.href = src;
+                        a.target = "_blank";
+                        let filename = src.split(/[#?]/);
+                        filename = filename[0].match(/[\w.]+$/);
+                        a.download = filename && filename[0] || "save.jpg";
+                        a.click();
+                    }
                     next();
                 }
             }
