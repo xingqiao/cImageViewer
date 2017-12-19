@@ -458,6 +458,7 @@
                     body{background-color:#000;font:16px/1.5 sans-serif}
                     body{background-color:${opts.background}}
                     a,a:hover{text-decoration:none}
+                    button{font-size:14px}
                     .civ,.civ-cont,.civ-item,.civ-item>div{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}
                     .civ-ft{position:absolute;right:15px;bottom:20px;left:15px;z-index:10;display:-webkit-box;-webkit-box-align:center;overflow:hidden;font-size:14px;color:rgba(255,255,255,.6);}
                     .civ-page__cur{font-size:20px;font-weight:normal;color:#fff;}
