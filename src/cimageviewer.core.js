@@ -45,6 +45,9 @@
 
     var utils = {
         touch: "ontouchend" in doc ? true : false,
+        ios: (function() {
+            return /(iPhone|iPod|iPad)/i.test(navigator.userAgent);
+        })(),
         $: function (s, p, fun) {
             let func = fun || "querySelector";
             return p && p[func] ? p[func](s) : doc[func](s);
@@ -86,7 +89,7 @@
         transform: function (elem, x, y, scale) {
             x = x == null ? 0 : x;
             y = y == null ? 0 : y;
-            elem.style.transform = elem.style.webkitTransform = "translate3d(" + x + "px," + y + "px,0)" + (scale > 0 ? " scale(" + scale + ")" : "");
+            elem.style.transform = elem.style.webkitTransform = (this.ios ? "translate(" + x + "px," + y + "px)" : "translate3d(" + x + "px," + y + "px,0)") + (scale > 0 ? " scale(" + scale + ")" : "");
         },
         /**
          * 兼容 touchstart 和 mousedown
@@ -587,6 +590,9 @@
                     if (touche) {
                         let x, y;
                         let zoom = items.cur.zoom;
+                        if (!zoom) {
+                            return;
+                        }
                         let scale = zoom.scale;
                         let x1 = touche.pageX;
                         let y1 = touche.pageY;
@@ -615,7 +621,7 @@
                             touches[0].y = y1;
                             touches[1].x = x2;
                             touches[1].y = y2;
-                        } else if (touches.length && opts.list.length > 1) { // 平移
+                        } else if (touches.length) { // 平移
                             let dx = x1 - touches[0].x;
                             let dy = y1 - touches[0].y;
                             x = zoom.x - dx / scale;
@@ -623,7 +629,7 @@
                             if (x > 0 && x < (zoom.width - width) / scale) {
                                 y = zoom.y - dy / scale;
                                 _setZoom(x, y, scale);
-                            } else{
+                            } else if (opts.list.length > 1) {
                                 if (dx) {
                                     let move = parseInt(transform.move + dx);
                                     if (-move >= view.left && -move <= view.right) {
