@@ -153,13 +153,19 @@
                 });
                 elem.addEventListener("touchmove", function (e) {
                     if (x1 != null) {
-                        x2 = e.touches[0].pageX;
-                        y2 = e.touches[0].pageY;
+                        if (e.touches.length > 1) {
+                            x1 = null;
+                        } else {
+                            x2 = e.touches[0].pageX;
+                            y2 = e.touches[0].pageY;
+                        }
                     }
                 });
                 elem.addEventListener("touchend", function (e) {
-                    if (Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) < 400) {
-                        callback.call(elem, e);
+                    if (x1 != null) {
+                        if (Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) < 400) {
+                            callback.call(elem, e);
+                        }
                     }
                     x1 = null;
                 });
