@@ -679,9 +679,9 @@
                     let scale = zoom.scale * (e.deltaY > 0 ? 0.9 : 1 / 0.9);
                     let cx = e.clientX;
                     let cy = e.clientY;
-                    let ds = scale - zoom.scale;
-                    let x = zoom.x + cx * ds / scale;
-                    let y = zoom.y + cy * ds / scale;
+                    let ds = 1 / zoom.scale - 1 / scale;
+                    let x = zoom.x + cx * ds;
+                    let y = zoom.y + cy * ds;
                     _setZoom(x, y, scale);
                 }
                 e.preventDefault();
