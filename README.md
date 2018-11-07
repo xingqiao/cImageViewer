@@ -31,7 +31,7 @@
 ```
 
 ```javascript
-new CIV({
+var civ = new CIV({
     animation: CIV.ANIMATION.TRANSLATE,
     background: "#0ff",
     list: [
@@ -42,7 +42,10 @@ new CIV({
         },
         "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432035906703126350.jpg",
         "//y.gtimg.cn/music/common/upload/t_cm3_photo_publish/1432035984898126350.jpg"
-    ]
+    ],
+    onclick: function () {
+        console.log(this.index); // civ == this
+    }
 }).show();
 ```
 
@@ -64,7 +67,7 @@ new CIV({
 | background | String | "#000" | 弹窗背景色，默认为黑色 |
 | animation | String | "translate" | 切换动画，默认是平移，值在 CIV.ANIMATION 中定义义 |
 
-## CLIP对象属性
+## CIV对象属性
 
 | 属性名 | 类型 | 值 | 描述 |
 |-|-|-|-|
@@ -76,7 +79,7 @@ new CIV({
 | save | Boolean | \- | 获取或设置保存按钮设置 |
 | saveBtn | String | \- | 获取或设置保存按钮文本 |
 
-## CLIP对象方法
+## CIV对象方法
 
 | 方法名 | 描述 |
 |-|-|
@@ -86,7 +89,7 @@ new CIV({
 | prev | 查看上一页 |
 | next | 查看下一页 |
 
-## CLIP对象事件
+## CIV对象事件
 
 | 事件名 | 描述 |
 |-|-|
